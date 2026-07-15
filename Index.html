@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spartan Dashboard — Today</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#121a24; --muted:#8aa0b7; --text:#e8f0ff;
+      --accent:#4aa3ff; --good:#2ecc71; --bad:#ff5c5c; --warn:#f6c344;
+      --border: rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(74,163,255,.12), transparent 60%),
+                  radial-gradient(1200px 600px at 80% 10%, rgba(46,204,113,.10), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:18px 18px 8px;
+      display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; justify-content:space-between;
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; background: rgba(11,15,20,.85); backdrop-filter: blur(10px);
+    }
+    .title h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .title p{margin:4px 0 0; color:var(--muted); font-size:13px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border:1px solid var(--border); border-radius:999px; color:var(--muted);
+      font-size:12px;
+    }
+    main{
+      padding:18px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 980px){ main{grid-template-columns:1fr} header{position:relative} }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .card h2{margin:0 0 10px; font-size:14px; letter-spacing:.2px}
+    .muted{color:var(--muted)}
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 560px){ .grid2{grid-template-columns:1fr} }
+
+    textarea, input[type="text"], input[type="number"]{
+      width:100%; padding:10px 10px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height:84px; resize:vertical}
+    label{font-size:12px; color:var(--muted); display:block; margin:0 0 6px}
+    .btn{
+      cursor:pointer;
+      border:1px solid var(--border);
+      background: rgba(74,163,255,.10);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .btn.secondary{background: rgba(255,255,255,.04)}
+    .btn.danger{background: rgba(255,92,92,.10)}
+    .btn:active{transform: translateY(1px)}
+    .toggle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background: rgba(0,0,0,.12);
+    }
+    .toggle strong{font-size:13px}
+    .toggle small{display:block; color:var(--muted); font-size:12px; margin-top:2px}
+    .switch{
+      width:44px; height:26px; border-radius:999px; border:1px solid var(--border);
+      position:relative; background: rgba(255,255,255,.05);
+      flex: 0 0 auto;
+    }
+    .switch::after{
+      content:""; position:absolute; top:3px; left:3px;
+      width:18px; height:18px; border-radius:50%;
+      background: rgba(255,255,255,.65);
+      transition: all .18s ease;
+    }
+    .switch.on{background: rgba(46,204,113,.18); border-color: rgba(46,204,113,.35)}
+    .switch.on::after{left:22px; background: rgba(46,204,113,.9)}
+    .kpi{
+      display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+      padding:10px 12px; border:1px solid var(--border); border-radius:12px;
+      background: rgba(0,0,0,.12);
+    }
+    .kpi .big{font-size:22px; font-weight:800; letter-spacing:.2px}
+    .kpi .sub{font-size:12px; color:var(--muted)}
+    details{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.10);
+    }
+    summary{cursor:pointer; font-weight:700; font-size:13px}
+    ul{margin:8px 0 0 18px; color: var(--text)}
+    .tag{display:inline-block; font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted)}
+    .ok{color:var(--good)}
+    .bad{color:var(--bad)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>Spartan Dashboard — Today</h1>
+      <p class="muted" id="todayLine">Forward. Always.</p>
+    </div>
+    <div class="row">
+      <span class="pill">Date: <strong id="dateText"></strong></span>
+      <span class="pill">Workout: <strong id="workoutText"></strong></span>
+      <span class="pill">Save: <strong class="ok" id="saveState">On</strong></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Today’s Mission (Focus)</h2>
+      <div class="grid2">
+        <div>
+          <label for="mission">Mission (1 sentence)</label>
+          <input id="mission" type="text" placeholder="e.g., Stay clean + close one money move + gym." />
+        </div>
+        <div>
+          <label for="focusTimer">Focus Timer (minutes)</label>
+          <div class="row">
+            <input id="focusTimer" type="number" min="5" step="5" value="25" />
+            <button class="btn" id="startTimer">Start</button>
+            <button class="btn secondary" id="stopTimer">Stop</button>
+          </div>
+          <div class="muted" style="margin-top:6px;font-size:12px">
+            Timer: <strong id="timerStatus">Ready</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="grid2">
+        <div>
+          <label for="win">Win of the day</label>
+          <textarea id="win" placeholder="What did you do right today?"></textarea>
+        </div>
+        <div>
+          <label for="fix">Fix tomorrow</label>
+          <textarea id="fix" placeholder="What is the ONE correction for tomorrow?"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="grid2">
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:10px">Daily Check-in (A)</h2>
+          <div id="toggles" style="display:grid; gap:10px"></div>
+        </div>
+
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:10px">Spartan XP</h2>
+          <div class="kpi">
+            <div>
+              <div class="big" id="xpTotal">0</div>
+              <div class="sub">Total XP today</div>
+            </div>
+            <div class="tag" id="xpGrade">—</div>
+          </div>
+
+          <details style="margin-top:10px">
+            <summary>Edit XP values</summary>
+            <div style="margin-top:10px" id="xpEditor"></div>
+          </details>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn secondary" id="copySummary">Copy daily summary</button>
+            <button class="btn danger" id="resetToday">Reset today</button>
+          </div>
+          <p class="muted" style="margin:10px 0 0; font-size:12px">
+            Saves automatically in your browser (localStorage).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>Chief’s Weekly Routine (Built-in)</h2>
+
+      <details open>
+        <summary>Daily Foundation</summary>
+        <ul>
+          <li><strong>5:00 a.m.</strong> Wake, water, creatine, 5-min stretch</li>
+          <li><strong>5:20–6:20 a.m.</strong> Gym</li>
+          <li><strong>6:30 a.m.</strong> Recovery smoothie (whey, Greek yogurt or milk, blueberries, banana, oat milk, dates if needed)</li>
+          <li><strong>7:15 a.m.</strong> Shower and work</li>
+          <li><strong>12:00–1:00 p.m.</strong> Chicken thighs, broccoli, water</li>
+          <li><strong>Afternoon snack</strong> Greek yogurt, fruit, meat stick, or cottage cheese</li>
+          <li><strong>Dinner</strong> Eggs, chicken, smoothie, or steak</li>
+          <li><strong>10:00 p.m.</strong> Phone down, water, sleep</li>
+        </ul>
+      </details>
+
+      <details style="margin-top:10px" open>
+        <summary>Workout Split</summary>
+        <ul id="splitList"></ul>
+      </details>
+
+      <details style="margin-top:10px">
+        <summary>Sunday Meal Prep</summary>
+        <ul>
+          <li>Grill chicken thighs</li>
+          <li>Steam broccoli</li>
+          <li>Portion meals</li>
+          <li>Boil eggs</li>
+          <li>Wash fruit</li>
+          <li>Prep smoothie ingredients</li>
+        </ul>
+      </details>
+
+      <details style="margin-top:10px">
+        <summary>Grocery Staples</summary>
+        <p class="muted" style="margin:8px 0 0">
+          Chicken thighs, farm eggs, whey, Greek yogurt, blueberries, bananas, pineapple, dragon fruit,
+          oat milk, broccoli, applesauce, dates.
+        </p>
+      </details>
+
+      <details style="margin-top:10px">
+        <summary>Recovery</summary>
+        <ul>
+          <li>Attend NA meetings</li>
+          <li>Therapy as scheduled</li>
+          <li>Stay hydrated</li>
+          <li>Allow one enjoyable meal each week, then return to routine</li>
+        </ul>
+      </details>
+
+      <details style="margin-top:10px" open>
+        <summary>Friday Financial Check</summary>
+        <ul>
+          <li>Review savings</li>
+          <li>Pay bills</li>
+          <li>Contribute toward: truck, emergency fund, future apartment</li>
+        </ul>
+      </details>
+
+      <details style="margin-top:10px" open>
+        <summary>Weekly Checklist</summary>
+        <ul>
+          <li>✔ 5 gym sessions</li>
+          <li>✔ Meal prep</li>
+          <li>✔ Grocery shopping</li>
+          <li>✔ NA meetings</li>
+          <li>✔ 7+ hours sleep</li>
+          <li>✔ Plenty of water</li>
+          <li>✔ Savings contribution</li>
+        </ul>
+      </details>
+    </aside>
+  </main>
+
+<script>
+  const workoutSplit = [
+    ["Monday", "Chest & Triceps"],
+    ["Tuesday", "Back & Biceps"],
+    ["Wednesday", "Legs"],
+    ["Thursday", "Shoulders & Abs"],
+    ["Friday", "Chest & Arms (lighter)"],
+    ["Saturday", "Cardio + stretching + pool (if applicable)"],
+    ["Sunday", "Rest + walk + stretch"],
+  ];
+
+  const DEFAULTS = {
+    mission: "",
+    win: "",
+    fix: "",
+    timerMinutes: 25,
+    toggles: {
+      prayer: false,
+      gym: false,
+      protein: false,
+      water: false,
+      recovery: false,
+      sleep: false,
+      money: false
+    },
+    xpValues: {
+      prayer: 10,
+      gym: 20,
+      protein: 15,
+      water: 10,
+      recovery: 25,
+      sleep: 15,
+      money: 20
+    }
+  };
+
+  const toggleMeta = [
+    { key:"prayer",  title:"Prayer",  desc:"+10 XP" },
+    { key:"gym",     title:"Workout (Gym)", desc:"Follow today’s split" },
+    { key:"protein", title:"Protein plan", desc:"Hit protein target" },
+    { key:"water",   title:"Water goal", desc:"Hydration on point" },
+    { key:"recovery",title:"Recovery work", desc:"Meeting / therapy / outreach" },
+    { key:"sleep",   title:"Sleep goal", desc:"7+ hours" },
+    { key:"money",   title:"❌ Money: Dipped into savings", desc:"Penalty if toggled ON" }
+  ];
+
+  const storageKey = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `spartan-dashboard:${yyyy}-${mm}-${dd}`;
+  };
+
+  function loadState() {
+    const raw = localStorage.getItem(storageKey());
+    if (!raw) return structuredClone(DEFAULTS);
+    try {
+      const parsed = JSON.parse(raw);
+      return {
+        ...structuredClone(DEFAULTS),
+        ...parsed,
+        toggles: { ...structuredClone(DEFAULTS.toggles), ...(parsed.toggles||{}) },
+        xpValues:{ ...structuredClone(DEFAULTS.xpValues), ...(parsed.xpValues||{}) },
+      };
+    } catch {
+      return structuredClone(DEFAULTS);
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(storageKey(), JSON.stringify(state));
+    document.getElementById("saveState").textContent = "On";
+    document.getElementById("saveState").className = "ok";
+  }
+
+  let state = loadState();
+
+  function formatDate(d){
+    return d.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"short", day:"numeric" });
+  }
+  function todaysWorkoutLabel(d){
+    const day = d.toLocaleDateString(undefined, { weekday:"long" });
+    const found = workoutSplit.find(([w]) => w === day);
+    return found ? found[1] : "—";
+  }
+  function computeXP(){
+    let total = 0;
+    for (const k of Object.keys(state.toggles)){
+      const on = !!state.toggles[k];
+      const val = Number(state.xpValues[k] ?? 0);
+      if (!on) continue;
+      if (k === "money") total -= val;
+      else total += val;
+    }
+    return total;
+  }
+  function gradeFromXP(xp){
+    if (xp >= 90) return { label:"Elite", cls:"ok" };
+    if (xp >= 70) return { label:"Solid", cls:"ok" };
+    if (xp >= 50) return { label:"Keep pushing", cls:"warn" };
+    return { label:"Rebuild tomorrow", cls:"bad" };
+  }
+
+  const d = new Date();
+  document.getElementById("dateText").textContent = formatDate(d);
+  document.getElementById("workoutText").textContent = todaysWorkoutLabel(d);
+  document.getElementById("todayLine").textContent = "Keep it short; consistency beats perfection.";
+
+  const splitList = document.getElementById("splitList");
+  splitList.innerHTML = workoutSplit.map(([day, plan]) => {
+    const isToday = day === d.toLocaleDateString(undefined, { weekday:"long" });
+    return `<li>${isToday ? "<strong class='ok'>Today:</strong> " : ""}<strong>${day}:</strong> ${plan}</li>`;
+  }).join("");
+
+  const missionEl = document.getElementById("mission");
+  const winEl = document.getElementById("win");
+  const fixEl = document.getElementById("fix");
+  const focusTimerEl = document.getElementById("focusTimer");
+
+  missionEl.value = state.mission;
+  winEl.value = state.win;
+  fixEl.value = state.fix;
+  focusTimerEl.value = state.timerMinutes;
+
+  missionEl.addEventListener("input", () => { state.mission = missionEl.value; saveState(); });
+  winEl.addEventListener("input", () => { state.win = winEl.value; saveState(); });
+  fixEl.addEventListener("input", () => { state.fix = fixEl.value; saveState(); });
+  focusTimerEl.addEventListener("input", () => { state.timerMinutes = Number(focusTimerEl.value||25); saveState(); });
+
+  const togglesWrap = document.getElementById("toggles");
+  function renderToggles(){
+    togglesWrap.innerHTML = "";
+    toggleMeta.forEach(meta => {
+      const on = !!state.toggles[meta.key];
+      const div = document.createElement("div");
+      div.className = "toggle";
+      div.innerHTML = `
+        <div>
+          <strong>${meta.title}</strong>
+          <small>${meta.desc}</small>
+        </div>
+        <div class="switch ${on ? "on":""}" role="switch" aria-checked="${on}" tabindex="0"></div>
+      `;
+      const sw = div.querySelector(".switch");
+      function flip(){
+        state.toggles[meta.key] = !state.toggles[meta.key];
+        saveState();
+        updateXP();
+        renderToggles();
+      }
+      sw.addEventListener("click", flip);
+      sw.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); flip(); } });
+      togglesWrap.appendChild(div);
+    });
+  }
+
+  const xpEditor = document.getElementById("xpEditor");
+  function renderXPEditor(){
+    xpEditor.innerHTML = "";
+    for (const meta of toggleMeta){
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gridTemplateColumns = "1fr 90px";
+      wrap.style.gap = "10px";
+      wrap.style.alignItems = "center";
+      wrap.style.marginBottom = "10px";
+      wrap.innerHTML = `
+        <div class="muted" style="font-size:12px">${meta.title}</div>
+        <input type="number" min="0" step="5" value="${Number(state.xpValues[meta.key] ?? 0)}" />
+      `;
+      const inp = wrap.querySelector("input");
+      inp.addEventListener("input", ()=>{
+        state.xpValues[meta.key] = Number(inp.value || 0);
+        saveState();
+        updateXP();
+      });
+      xpEditor.appendChild(wrap);
+    }
+  }
+
+  function updateXP(){
+    const xp = computeXP();
+    document.getElementById("xpTotal").textContent = xp;
+    const g = gradeFromXP(xp);
+    const chip = document.getElementById("xpGrade");
+    chip.textContent = g.label;
+    chip.className = `tag ${g.cls || ""}`;
+  }
+
+  renderToggles();
+  renderXPEditor();
+  updateXP();
+
+  let timerId = null;
+  let remaining = 0;
+  const timerStatus = document.getElementById("timerStatus");
+
+  function setTimerText(){
+    if (!timerId) { timerStatus.textContent = "Ready"; return; }
+    const m = Math.floor(remaining/60);
+    const s = remaining%60;
+    timerStatus.textContent = `${m}:${String(s).padStart(2,"0")} remaining`;
+  }
+
+  document.getElementById("startTimer").addEventListener("click", ()=>{
+    if (timerId) return;
+    remaining = Math.max(1, Number(state.timerMinutes||25)) * 60;
+    timerId = setInterval(()=>{
+      remaining--;
+      setTimerText();
+      if (remaining <= 0){
+        clearInterval(timerId);
+        timerId = null;
+        setTimerText();
+        alert("Focus block complete. Log your win and move forward.");
+      }
+    }, 1000);
+    setTimerText();
+  });
+
+  document.getElementById("stopTimer").addEventListener("click", ()=>{
+    if (timerId){
+      clearInterval(timerId);
+      timerId = null;
+      setTimerText();
+    }
+  });
+
+  document.getElementById("copySummary").addEventListener("click", async ()=>{
+    const dayName = d.toLocaleDateString(undefined, { weekday:"long" });
+    const workout = todaysWorkoutLabel(d);
+    const xp = computeXP();
+
+    const lines = [];
+    lines.push(`Mission: ${state.mission || "—"}`);
+    lines.push(`Workout (${dayName}): ${workout} — ${state.toggles.gym ? "DONE" : "NOT DONE"}`);
+    lines.push(`Nutrition (protein): ${state.toggles.protein ? "HIT" : "MISS"}`);
+    lines.push(`Water: ${state.toggles.water ? "HIT" : "MISS"}`);
+    lines.push(`Recovery: ${state.toggles.recovery ? "DONE" : "MISS"}`);
+    lines.push(`Sleep 7+: ${state.toggles.sleep ? "HIT" : "MISS"}`);
+    lines.push(`Prayer: ${state.toggles.prayer ? "DONE" : "MISS"}`);
+    lines.push(`Money (dipped into savings): ${state.toggles.money ? "FAIL" : "PASS"}`);
+    lines.push(`Win: ${state.win || "—"}`);
+    lines.push(`Fix tomorrow: ${state.fix || "—"}`);
+    lines.push(`Total XP: ${xp}`);
+
+    const text = lines.join("\n");
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard.");
+    } catch {
+      prompt("Copy this text:", text);
+    }
+  });
+
+  document.getElementById("resetToday").addEventListener("click", ()=>{
+    if (!confirm("Reset today’s inputs?")) return;
+    state = structuredClone(DEFAULTS);
+    saveState();
+    missionEl.value = state.mission;
+    winEl.value = state.win;
+    fixEl.value = state.fix;
+    focusTimerEl.value = state.timerMinutes;
+    renderToggles();
+    renderXPEditor();
+    updateXP();
+  });
+</script>
+</body>
+</html>
